@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Detection Rules - CyberSOC Mini{% endblock %}
+{% block content %}
+<div class="settings-page">
+    <h1>Detection Rules</h1>
+    <p class="subtitle">Currently active detection rules in the system.</p>
+
+    <div class="rules-grid">
+    {% for rule in rules %}
+        <div class="rule-card sev-border-{{ rule.severity }}">
+            <div class="rule-header">
+                <span class="badge {{ 'sev-' + rule.severity }}">{{ rule.severity|upper }}</span>
+                <code>{{ rule.id }}</code>
+            </div>
+            <h3>{{ rule.name }}</h3>
+            <p>{{ rule.description }}</p>
+            <dl class="rule-meta">
+                <dt>Detection</dt><dd>{{ rule.detect }}</dd>
+                <dt>Base Score</dt><dd>{{ rule.base_score }}</dd>
+                {% if rule.threshold %}
+                <dt>Threshold</dt><dd>{{ rule.threshold }} events in {{ rule.window_seconds }}s</dd>
+                {% endif %}
+                {% if rule.pattern %}
+                <dt>Pattern</dt><dd><code class="pattern">{{ rule.pattern }}</code></dd>
+                {% endif %}
+            </dl>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}

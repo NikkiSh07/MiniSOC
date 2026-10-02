@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Server Logs - CyberSOC Mini{% endblock %}
+{% block content %}
+<div class="logs-page">
+    <div class="page-header">
+        <h1>Server Logs</h1>
+        <div class="filters">
+            <select onchange="applyFilters()" id="fileFilter">
+                <option value="" {% if not current_file %}selected{% endif %}>All Files</option>
+                {% for f in log_files %}
+                <option value="{{ f.name }}" {% if current_file == f.name %}selected{% endif %}>{{ f.name }} ({{ f.lines }} lines)</option>
+                {% endfor %}
+            </select>
+            <select onchange="applyFilters()" id="levelFilter">
+                <option value="" {% if not current_level %}selected{% endif %}>All Levels</option>
+                <option value="INFO" {% if current_level == 'INFO' %}selected{% endif %}>INFO</option>
+                <option value="WARNING" {% if current_level == 'WARNING' %}selected{% endif %}>WARNING</option>
+                <option value="CRITICAL" {% if current_level == 'CRITICAL' %}selected{% endif %}>CRITICAL</option>
+            </select>
+            <input type="text" id="searchInput" placeholder="Search logs..." value="{{ search or '' }}" onkeydown="if(event.key==='Enter')applyFilters()">
+            <button class="btn btn-sm" onclick="applyFilters()">Search</button>
+        </div>
+    </div>
+
+    <!-- Log files summary -->
+    <div class="log-files-grid">
+        {% for f in log_files %}
+        <div class="log-file-card" onclick="document.getElementById('fileFilter').value='{{ f.name }}'; applyFilters()">
+            <div class="log-file-icon">&#128196;</div>
+            <div class="log-file-info">
+                <strong>{{ f.name }}</strong>
+                <span>{{ f.lines }} lines &middot; {{ (f.size / 1024)|round(1) }} KB &middot; {{ f.modified }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="panel full-width">
+        <h2>Log Entries <span class="badge">{{ entries|length }} shown</span></h2>
+        <div class="log-entries">
+            {% for entry in entries %}
+            <div class="log-entry log-level-{{ entry.level|lower }}">
+                <div class="log-meta">
+                    <span class="log-timestamp">{{ entry.timestamp }}</span>
+                    <span class="badge log-badge-{{ entry.level|lower }}">{{ entry.level }}</span>
+                    <span class="log-source">{{ entry.source }}</span>
+                    <code class="log-action">{{ entry.action }}</code>
+                    <span class="log-user">{{ entry.user }}</span>
+                    <code class="log-ip">{{ entry.ip }}</code>
+                    <span class="log-file-tag">{{ entry.file }}</span>
+                </div>
+                <div class="log-detail">{{ entry.detail }}</div>
+                <div class="log-raw">{{ entry.raw }}</div>
+            </div>
+            {% endfor %}
+            {% if not entries %}
+            <div class="empty-state">No log entries match the current filters.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    function applyFilters() {
+        const file = document.getElementById('fileFilter').value;
+        const level = document.getElementById('levelFilter').value;
+        const search = document.getElementById('searchInput').value;
+        let url = '/logs?';
+        if (file) url += 'file=' + encodeURIComponent(file) + '&';
+        if (level) url += 'level=' + encodeURIComponent(level) + '&';
+        if (search) url += 'search=' + encodeURIComponent(search) + '&';
+        window.location = url;
+    }
+</script>
+{% endblock %}

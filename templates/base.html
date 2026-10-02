@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CyberSOC Mini{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">&#9764;</div>
+            <span>CyberSOC</span>
+        </div>
+        <ul>
+            <li><a href="/dashboard" class="{% if request.path == '/dashboard' %}active{% endif %}">&#9632; Dashboard</a></li>
+            <li><a href="/logs" class="{% if '/logs' in request.path %}active{% endif %}">&#128196; Logs</a></li>
+            <li><a href="/alerts" class="{% if '/alert' in request.path %}active{% endif %}">&#9888; Alerts</a></li>
+            <li><a href="/incidents" class="{% if '/incident' in request.path %}active{% endif %}">&#128269; Incidents</a></li>
+            <li><a href="/settings" class="{% if '/settings' in request.path %}active{% endif %}">&#9881; Rules</a></li>
+        </ul>
+        <div class="nav-footer">
+            <button onclick="triggerScan()" class="btn btn-scan">&#8635; Scan Now</button>
+            <div class="status-indicator" id="scanStatus"></div>
+        </div>
+    </nav>
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+    <script>
+        async function triggerScan() {
+            const el = document.getElementById('scanStatus');
+            el.textContent = 'Scanning...';
+            el.className = 'status-indicator scanning';
+            const r = await fetch('/api/scan', {method:'POST'});
+            const d = await r.json();
+            el.textContent = 'Done!';
+            el.className = 'status-indicator done';
+            setTimeout(() => { el.textContent = ''; el.className = 'status-indicator'; }, 2000);
+            location.reload();
+        }
+
+        // Apply dynamic risk score colors
+        function applyRiskColors() {
+            document.querySelectorAll('.risk-score[data-score]').forEach(el => {
+                const score = parseInt(el.dataset.score || '0', 10);
+                if (score >= 85) {
+                    el.style.color = '#f85149';
+                    el.style.background = 'rgba(248,81,73,0.15)';
+                } else if (score >= 60) {
+                    el.style.color = '#f0883e';
+                    el.style.background = 'rgba(240,136,62,0.15)';
+                } else if (score >= 30) {
+                    el.style.color = '#d29922';
+                    el.style.background = 'rgba(210,153,34,0.15)';
+                } else {
+                    el.style.color = '#3fb950';
+                    el.style.background = 'rgba(63,185,80,0.15)';
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', applyRiskColors);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

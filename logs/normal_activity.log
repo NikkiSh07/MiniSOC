@@ -1,0 +1,19 @@
+[2026-09-01 07:55:00] INFO auth.server LOGIN_SUCCESS user_a 192.168.1.100 user=user_a login successful
+[2026-09-01 07:55:30] INFO web.server REQUEST user_a 192.168.1.100 GET /api/products
+[2026-09-01 08:00:00] INFO auth.server LOGIN_SUCCESS user_b 192.168.1.101 user=user_b login successful
+[2026-09-01 08:00:30] INFO web.server REQUEST user_b 192.168.1.101 GET /api/orders
+[2026-09-01 08:05:00] INFO auth.server LOGIN_SUCCESS admin 192.168.1.10 user=admin login successful
+[2026-09-01 08:05:30] INFO web.server REQUEST admin 192.168.1.10 GET /admin/dashboard
+[2026-09-01 08:10:00] INFO auth.server LOGIN_SUCCESS operator 192.168.1.20 user=operator login successful
+[2026-09-01 08:10:30] INFO web.server REQUEST operator 192.168.1.20 GET /api/reports
+[2026-09-01 08:15:00] INFO web.server REQUEST user_a 192.168.1.100 GET /api/products?page=2
+[2026-09-01 08:15:30] INFO web.server REQUEST user_b 192.168.1.101 GET /api/orders?status=active
+[2026-09-01 08:20:00] INFO auth.server LOGIN_SUCCESS user_c 192.168.1.102 user=user_c login successful
+[2026-09-01 08:20:30] INFO web.server REQUEST user_c 192.168.1.102 GET /api/inventory
+[2026-09-01 08:25:00] INFO web.server REQUEST admin 192.168.1.10 GET /admin/users
+[2026-09-01 08:30:00] INFO web.server REQUEST operator 192.168.1.20 GET /api/reports/monthly
+[2026-09-01 08:35:00] INFO auth.server LOGOUT admin 192.168.1.10 user=admin logout
+[2026-09-01 08:40:00] INFO web.server REQUEST user_a 192.168.1.100 GET /api/products/search?q=widget
+[2026-09-01 08:45:00] INFO web.server REQUEST user_b 192.168.1.101 GET /api/orders/history
+[2026-09-01 08:50:00] INFO auth.server LOGIN_SUCCESS user_d 192.168.1.103 user=user_d login successful
+[2026-09-01 08:55:00] INFO web.server REQUEST user_c 192.168.1.102 GET /api/inventory/stock

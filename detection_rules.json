@@ -1,0 +1,113 @@
+[
+  {
+    "id": "BRUTE_FORCE",
+    "name": "Brute Force Login Attempt",
+    "description": "Multiple failed login attempts from the same IP/user within a short window.",
+    "severity": "high",
+    "base_score": 40,
+    "detect": "threshold",
+    "field": "user",
+    "condition": "action == 'LOGIN_FAIL'",
+    "threshold": 5,
+    "window_seconds": 300
+  },
+  {
+    "id": "MULTI_FAIL_LOGIN",
+    "name": "Repeated Failed Logins",
+    "description": "Same user failing login from multiple IPs.",
+    "severity": "high",
+    "base_score": 35,
+    "detect": "threshold",
+    "field": "user",
+    "condition": "action == 'LOGIN_FAIL'",
+    "threshold": 3,
+    "window_seconds": 300,
+    "group_by": "ip"
+  },
+  {
+    "id": "SUSPICIOUS_IP",
+    "name": "Suspicious IP Activity",
+    "description": "IP generating events from multiple users or high error rate.",
+    "severity": "medium",
+    "base_score": 25,
+    "detect": "threshold",
+    "field": "ip",
+    "condition": "action in ('LOGIN_FAIL', 'ACCESS_DENIED')",
+    "threshold": 3,
+    "window_seconds": 300
+  },
+  {
+    "id": "PRIV_ESC",
+    "name": "Privilege Escalation Pattern",
+    "description": "Execution of privileged commands indicating privilege escalation.",
+    "severity": "critical",
+    "base_score": 50,
+    "detect": "pattern",
+    "field": "detail",
+    "pattern": "(sudo |chmod |chown |useradd|usermod|visudo|wget |/etc/shadow|--uid 0| && id)"
+  },
+  {
+    "id": "SQLI_ATTEMPT",
+    "name": "SQL Injection Attempt",
+    "description": "SQL injection patterns detected in request details.",
+    "severity": "critical",
+    "base_score": 45,
+    "detect": "pattern",
+    "field": "detail",
+    "pattern": "(UNION SELECT|OR 1=1|DROP TABLE|--\\s|;\\s*DROP|'\\s*OR\\s*')"
+  },
+  {
+    "id": "UNUSUAL_LOCATION",
+    "name": "Unusual Login Location",
+    "description": "Login from geographically unusual or high-risk location.",
+    "severity": "medium",
+    "base_score": 20,
+    "detect": "pattern",
+    "field": "detail",
+    "pattern": "(TOR_EXIT|VPN_|COUNTRY=XX|geo=unknown)"
+  },
+  {
+    "id": "SENSITIVE_ACCESS",
+    "name": "Repeated Sensitive Resource Access",
+    "description": "Excessive access to sensitive files or endpoints.",
+    "severity": "high",
+    "base_score": 30,
+    "detect": "threshold",
+    "field": "user",
+    "condition": "action == 'ACCESS_SENSITIVE'",
+    "threshold": 4,
+    "window_seconds": 300
+  },
+  {
+    "id": "COMMAND_INJECTION",
+    "name": "Command Injection Attempt",
+    "description": "Shell command injection patterns detected.",
+    "severity": "critical",
+    "base_score": 50,
+    "detect": "pattern",
+    "field": "detail",
+    "pattern": "(`.*`|\\$\\(.*\\)|;\\s*(cat|ls|whoami|id|curl|wget|nc ))"
+  },
+  {
+    "id": "PATH_TRAVERSAL",
+    "name": "Path Traversal Attempt",
+    "description": "Directory traversal patterns detected in requests.",
+    "severity": "high",
+    "base_score": 35,
+    "detect": "pattern",
+    "field": "detail",
+    "pattern": "(\\.\\./\\.\\./|\\.\\.\\\\\\.\\.\\\\|%2e%2e)"
+  },
+  {
+    "id": "PORT_SCAN",
+    "name": "Port Scanning Activity",
+    "description": "Multiple connection attempts to different ports from same IP.",
+    "severity": "medium",
+    "base_score": 25,
+    "detect": "threshold",
+    "field": "ip",
+    "condition": "action == 'CONN_ATTEMPT'",
+    "threshold": 6,
+    "window_seconds": 120
+  }
+]

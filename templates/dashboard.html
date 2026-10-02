@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}SOC Dashboard - CyberSOC Mini{% endblock %}
+{% block content %}
+<div class="dashboard">
+    <h1>SOC Dashboard</h1>
+
+    <!-- Pipeline Status -->
+    <div class="pipeline-status">
+        <div class="pipeline-step">
+            <div class="pipeline-icon">&#128196;</div>
+            <div class="pipeline-label">Server Logs</div>
+            <div class="pipeline-value">{{ stats.total_log_files }} files</div>
+        </div>
+        <div class="pipeline-arrow">&rarr;</div>
+        <div class="pipeline-step">
+            <div class="pipeline-icon">&#128230;</div>
+            <div class="pipeline-label">Log Collector</div>
+            <div class="pipeline-value">{{ stats.total_log_entries }} entries</div>
+        </div>
+        <div class="pipeline-arrow">&rarr;</div>
+        <div class="pipeline-step">
+            <div class="pipeline-icon">&#128269;</div>
+            <div class="pipeline-label">Detection Rules</div>
+            <div class="pipeline-value">{{ stats.total_rules }} rules</div>
+        </div>
+        <div class="pipeline-arrow">&rarr;</div>
+        <div class="pipeline-step">
+            <div class="pipeline-icon">&#9888;</div>
+            <div class="pipeline-label">Alert Engine</div>
+            <div class="pipeline-value">{{ stats.total_alerts }} alerts</div>
+        </div>
+        <div class="pipeline-arrow">&rarr;</div>
+        <div class="pipeline-step">
+            <div class="pipeline-icon">&#128200;</div>
+            <div class="pipeline-label">Risk Score</div>
+            <div class="pipeline-value risk-score" data-score="{{ stats.max_risk }}">Max {{ stats.max_risk }}</div>
+        </div>
+        <div class="pipeline-arrow">&rarr;</div>
+        <div class="pipeline-step active-step">
+            <div class="pipeline-icon">&#9632;</div>
+            <div class="pipeline-label">Dashboard</div>
+            <div class="pipeline-value">Live</div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card critical">
+            <div class="stat-number">{{ stats.open_alerts }}</div>
+            <div class="stat-label">Open Alerts</div>
+        </div>
+        <div class="stat-card high">
+            <div class="stat-number">{{ stats.open_incidents }}</div>
+            <div class="stat-label">Open Incidents</div>
+        </div>
+        <div class="stat-card medium">
+            <div class="stat-number">{{ stats.total_alerts }}</div>
+            <div class="stat-label">Total Alerts</div>
+        </div>
+        <div class="stat-card low">
+            <div class="stat-number">
+                {{ stats.max_risk }}
+                <span class="risk-level-tag sev-{{ stats.max_risk_level }}">{{ stats.max_risk_level|upper }}</span>
+            </div>
+            <div class="stat-label">Max Risk Score</div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="panel">
+            <h2>Alerts by Severity</h2>
+            <div class="severity-bars">
+                {% for sev, count in stats.by_severity.items() %}
+                <div class="sev-bar">
+                    <span class="sev-label {{ 'sev-' + sev }}">{{ sev|upper }}</span>
+                    <div class="bar-track">
+                        <div class="bar-fill {{ 'sev-' + sev }}" style="width: {{ (count / (stats.open_alerts or 1) * 100)|int }}%"></div>
+                    </div>
+                    <span class="bar-count">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Top Offending IPs</h2>
+            <table class="data-table">
+                <thead><tr><th>IP Address</th><th>Alerts</th></tr></thead>
+                <tbody>
+                {% for item in stats.top_offending_ips %}
+                <tr>
+                    <td><code>{{ item.source_ip }}</code></td>
+                    <td><span class="badge">{{ item.c }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel">
+            <h2>Top Targeted Users</h2>
+            <table class="data-table">
+                <thead><tr><th>User</th><th>Alerts</th></tr></thead>
+                <tbody>
+                {% for item in stats.top_targeted_users %}
+                <tr>
+                    <td><code>{{ item.user }}</code></td>
+                    <td><span class="badge">{{ item.c }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel">
+            <h2>Most Triggered Rules</h2>
+            <table class="data-table">
+                <thead><tr><th>Rule</th><th>Count</th></tr></thead>
+                <tbody>
+                {% for item in stats.top_triggered_rules %}
+                <tr>
+                    <td>{{ item.rule_name }}</td>
+                    <td><span class="badge">{{ item.c }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel full-width">
+        <h2>Recent Alerts</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Time</th><th>Severity</th><th>Rule</th><th>IP</th><th>User</th><th>Status</th><th>Risk</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for alert in stats.recent_alerts %}
+            <tr onclick="window.location='/alert/{{ alert.id }}'" class="clickable">
+                <td>#{{ alert.id }}</td>
+                <td>{{ alert.timestamp }}</td>
+                <td><span class="badge {{ 'sev-' + alert.severity }}">{{ alert.severity|upper }}</span></td>
+                <td>{{ alert.rule_name }}</td>
+                <td><code>{{ alert.source_ip }}</code></td>
+                <td>{{ alert.user }}</td>
+                <td><span class="badge {{ 'status-' + alert.status }}">{{ alert.status }}</span></td>
+                <td><span class="risk-score" data-score="{{ alert.risk_score }}">{{ alert.risk_score }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="panel-footer">
+            <a href="/alerts" class="btn btn-link">View All Alerts &rarr;</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

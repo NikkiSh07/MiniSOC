@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Incident #{{ incident.id }} - CyberSOC Mini{% endblock %}
+{% block content %}
+<div class="incident-detail">
+    <div class="page-header">
+        <h1>Incident #{{ incident.id }}</h1>
+        <div class="header-actions">
+            <span class="badge {{ 'sev-' + incident.severity }}">{{ incident.severity|upper }}</span>
+            <span class="badge {{ 'status-' + incident.status }}">{{ incident.status }}</span>
+            <span class="risk-score" data-score="{{ incident.risk_score }}">Risk: {{ incident.risk_score }}</span>
+        </div>
+    </div>
+
+    <div class="detail-grid">
+        <div class="panel">
+            <h3>Incident Details</h3>
+            <dl class="detail-list">
+                <dt>Title</dt><dd>{{ incident.title }}</dd>
+                <dt>Description</dt><dd>{{ incident.description }}</dd>
+                <dt>Risk Score</dt>
+                <dd>
+                    <span class="risk-score" data-score="{{ incident.risk_score }}">{{ incident.risk_score }}</span>
+                    <span class="badge {{ 'sev-' + incident.risk_level }}">{{ incident.risk_level|upper }}</span>
+                </dd>
+                <dt>Status</dt><dd><span class="badge {{ 'status-' + incident.status }}">{{ incident.status }}</span></dd>
+                <dt>Created</dt><dd>{{ incident.created_at }}</dd>
+                <dt>Updated</dt><dd>{{ incident.updated_at }}</dd>
+            </dl>
+
+            <div class="status-actions" style="margin-top:1rem">
+                <button class="btn btn-investigate" onclick="updateIncidentStatus('investigating')">Investigating</button>
+                <button class="btn btn-resolve" onclick="updateIncidentStatus('resolved')">Resolved</button>
+                <button class="btn btn-close" onclick="updateIncidentStatus('closed')">Close</button>
+            </div>
+
+            <!-- Investigation Notes -->
+            <h3 style="margin-top: 1.5rem">Investigation Notes</h3>
+            <div class="notes-section">
+                <textarea id="incidentNotes" rows="4" placeholder="Document investigation findings, analysis, and conclusions...">{{ incident.investigation_notes or '' }}</textarea>
+                <button class="btn btn-sm" onclick="saveIncidentNotes()">Save Notes</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Response Actions</h3>
+            <div id="responseActions">
+            {% for action in incident.response_actions %}
+                <div class="response-action">
+                    <div class="response-action-header">
+                        <span class="badge">{{ action.action_type }}</span>
+                        <span class="badge response-status-{{ action.status }}">{{ action.status|upper }}</span>
+                    </div>
+                    <strong>{{ action.target }}</strong>
+                    <p>{{ action.description }}</p>
+                    {% if action.result %}
+                    <div class="response-result">&#10003; {{ action.result }}</div>
+                    {% endif %}
+                    <div class="response-action-footer">
+                        <small>{{ action.executed_at }}</small>
+                        {% if action.status == 'pending' %}
+                        <button class="btn btn-sm btn-execute" onclick="executeAction({{ action.id }})">&#9889; Execute</button>
+                        {% endif %}
+                        {% if action.completed_at %}
+                        <small>Completed: {{ action.completed_at }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+
+            <form id="responseForm" class="response-form" style="margin-top:1rem">
+                <label>Action Type</label>
+                <select id="respType">
+                    <option value="block_ip">&#128683; Block IP</option>
+                    <option value="disable_user">&#128274; Disable User</option>
+                    <option value="isolate_host">&#128268; Isolate Host</option>
+                    <option value="notify_admin">&#128276; Notify Admin</option>
+                    <option value="manual">&#9998; Manual Action</option>
+                </select>
+                <label>Target</label>
+                <input type="text" id="respTarget" placeholder="IP, user, host...">
+                <label>Description</label>
+                <textarea id="respDesc" rows="2" placeholder="Describe the response action..."></textarea>
+                <button type="submit" class="btn btn-create-incident">Add Response Action</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Linked Alerts -->
+    <div class="panel full-width">
+        <h3>Linked Alerts</h3>
+        <table class="data-table">
+            <thead>
+                <tr><th>ID</th><th>Time</th><th>Severity</th><th>Rule</th><th>IP</th><th>User</th><th>Risk</th></tr>
+            </thead>
+            <tbody>
+            {% for alert in incident.alerts %}
+            <tr class="clickable" onclick="window.location='/alert/{{ alert.id }}'">
+                <td>#{{ alert.id }}</td>
+                <td>{{ alert.timestamp }}</td>
+                <td><span class="badge {{ 'sev-' + alert.severity }}">{{ alert.severity|upper }}</span></td>
+                <td>{{ alert.rule_name }}</td>
+                <td><code>{{ alert.source_ip }}</code></td>
+                <td>{{ alert.user }}</td>
+                <td><span class="risk-score" data-score="{{ alert.risk_score }}">{{ alert.risk_score }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if not incident.alerts %}
+        <div class="empty-state">No alerts linked to this incident.</div>
+        {% endif %}
+    </div>
+
+    <!-- Audit Timeline -->
+    {% if incident.timeline %}
+    <div class="panel full-width">
+        <h3>Audit Timeline</h3>
+        <div class="timeline">
+            {% for event in incident.timeline %}
+            <div class="timeline-event">
+                <div class="timeline-dot {% if 'executed' in event.action %}dot-success{% elif 'created' in event.action %}dot-info{% endif %}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-action">{{ event.action|replace('_', ' ')|title }}</div>
+                    <div class="timeline-details">{{ event.details }}</div>
+                    <div class="timeline-time">{{ event.created_at }} &middot; {{ event.user }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    async function updateIncidentStatus(status) {
+        await fetch('/api/incident/{{ incident.id }}/status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status})
+        });
+        location.reload();
+    }
+
+    async function saveIncidentNotes() {
+        await fetch('/api/incident/{{ incident.id }}/notes', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({notes: document.getElementById('incidentNotes').value})
+        });
+        const btn = event.target;
+        btn.textContent = 'Saved!';
+        setTimeout(() => btn.textContent = 'Save Notes', 1500);
+    }
+
+    async function executeAction(actionId) {
+        if (!confirm('Execute this response action?')) return;
+        const r = await fetch(`/api/response/${actionId}/execute`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const d = await r.json();
+        if (d.ok) {
+            location.reload();
+        } else {
+            alert('Execution failed: ' + (d.error || 'Unknown error'));
+        }
+    }
+
+    document.getElementById('responseForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await fetch('/api/incident/{{ incident.id }}/response', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                action_type: document.getElementById('respType').value,
+                target: document.getElementById('respTarget').value,
+                description: document.getElementById('respDesc').value
+            })
+        });
+        location.reload();
+    };
+</script>
+{% endblock %}

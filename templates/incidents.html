@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Incidents - CyberSOC Mini{% endblock %}
+{% block content %}
+<div class="incidents-page">
+    <div class="page-header">
+        <h1>Incidents</h1>
+        <div class="filters">
+            <select onchange="window.location='?status='+this.value">
+                <option value="" {% if not current_status %}selected{% endif %}>All Status</option>
+                <option value="open" {% if current_status == 'open' %}selected{% endif %}>Open</option>
+                <option value="investigating" {% if current_status == 'investigating' %}selected{% endif %}>Investigating</option>
+                <option value="resolved" {% if current_status == 'resolved' %}selected{% endif %}>Resolved</option>
+                <option value="closed" {% if current_status == 'closed' %}selected{% endif %}>Closed</option>
+            </select>
+        </div>
+    </div>
+
+    <table class="data-table full">
+        <thead>
+            <tr>
+                <th>ID</th><th>Title</th><th>Severity</th><th>Risk</th><th>Status</th><th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for inc in incidents %}
+        <tr class="clickable" onclick="window.location='/incident/{{ inc.id }}'">
+            <td>#{{ inc.id }}</td>
+            <td>{{ inc.title }}</td>
+            <td><span class="badge {{ 'sev-' + inc.severity }}">{{ inc.severity|upper }}</span></td>
+            <td>
+                <span class="risk-score" data-score="{{ inc.risk_score }}">{{ inc.risk_score }}</span>
+                <span class="badge {{ 'sev-' + inc.risk_level }}">{{ inc.risk_level|upper }}</span>
+            </td>
+            <td><span class="badge {{ 'status-' + inc.status }}">{{ inc.status }}</span></td>
+            <td>{{ inc.created_at }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% if not incidents %}
+    <div class="empty-state">No incidents found. Create one from an alert detail page.</div>
+    {% endif %}
+</div>
+{% endblock %}

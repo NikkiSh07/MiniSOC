@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Alert #{{ alert.id }} - CyberSOC Mini{% endblock %}
+{% block content %}
+<div class="alert-detail">
+    <div class="page-header">
+        <h1>Alert #{{ alert.id }}</h1>
+        <div class="header-actions">
+            <span class="badge {{ 'sev-' + alert.severity }}">{{ alert.severity|upper }}</span>
+            <span class="badge {{ 'status-' + alert.status }}">{{ alert.status }}</span>
+            <span class="risk-score" data-score="{{ alert.risk_score }}">Risk: {{ alert.risk_score }}</span>
+        </div>
+    </div>
+
+    <div class="detail-grid">
+        <div class="panel">
+            <h3>Alert Information</h3>
+            <dl class="detail-list">
+                <dt>Rule</dt><dd>{{ alert.rule_name }} ({{ alert.rule_id }})</dd>
+                <dt>Description</dt><dd>{{ alert.description }}</dd>
+                <dt>Timestamp</dt><dd>{{ alert.timestamp }}</dd>
+                <dt>Source IP</dt><dd><code>{{ alert.source_ip }}</code></dd>
+                <dt>User</dt><dd>{{ alert.user }}</dd>
+                <dt>Action</dt><dd><code>{{ alert.action }}</code></dd>
+                <dt>Detail</dt><dd><code>{{ alert.detail }}</code></dd>
+                <dt>Evidence Count</dt><dd>{{ alert.evidence_count }}</dd>
+                <dt>Source File</dt><dd>{{ alert.file }}</dd>
+            </dl>
+        </div>
+
+        <div class="panel">
+            <h3>Risk Assessment</h3>
+            <div class="risk-gauge">
+                <div class="gauge-value risk-score" data-score="{{ alert.risk_score }}">{{ alert.risk_score }}</div>
+                <div class="gauge-label">Risk Score</div>
+                <div class="risk-level-badge sev-{{ alert.risk_level }}">{{ alert.risk_level|upper }}</div>
+            </div>
+            <div class="risk-breakdown">
+                <div class="breakdown-item">
+                    <span>Base Score</span><span>{{ alert.base_score }}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Severity Bonus</span><span>{{ alert.severity }}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Evidence</span><span>{{ alert.evidence_count }} hits</span>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 1.5rem">Status Management</h3>
+            <div class="status-actions">
+                <button class="btn btn-investigate" onclick="updateStatus('investigating')">Mark Investigating</button>
+                <button class="btn btn-resolve" onclick="updateStatus('resolved')">Mark Resolved</button>
+                <button class="btn btn-create-incident" onclick="showIncidentModal()">Create Incident</button>
+            </div>
+            <div class="notes-section" style="margin-top:1rem">
+                <label>Notes</label>
+                <textarea id="alertNotes" rows="3" placeholder="Add investigation notes...">{{ alert.notes or '' }}</textarea>
+                <button class="btn btn-sm" onclick="saveNotes()">Save Notes</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel full-width">
+        <h3>Raw Log Entry</h3>
+        <pre class="raw-log">{{ alert.raw }}</pre>
+    </div>
+
+    <!-- Investigation Timeline -->
+    {% if timeline %}
+    <div class="panel full-width">
+        <h3>Investigation Timeline</h3>
+        <div class="timeline">
+            {% for event in timeline %}
+            <div class="timeline-event">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-action">{{ event.action }}</div>
+                    <div class="timeline-details">{{ event.details }}</div>
+                    <div class="timeline-time">{{ event.created_at }} &middot; {{ event.user }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Correlated Alerts -->
+    {% if correlations.by_ip or correlations.by_user %}
+    <div class="panel full-width">
+        <h3>Correlated Alerts</h3>
+
+        {% if correlations.by_ip %}
+        <h4 class="correlation-header">Same Source IP: <code>{{ alert.source_ip }}</code> ({{ correlations.by_ip|length }} alerts)</h4>
+        <table class="data-table">
+            <thead><tr><th>ID</th><th>Time</th><th>Severity</th><th>Rule</th><th>User</th><th>Risk</th></tr></thead>
+            <tbody>
+            {% for a in correlations.by_ip[:5] %}
+            <tr class="clickable" onclick="window.location='/alert/{{ a.id }}'">
+                <td>#{{ a.id }}</td>
+                <td>{{ a.timestamp }}</td>
+                <td><span class="badge {{ 'sev-' + a.severity }}">{{ a.severity|upper }}</span></td>
+                <td>{{ a.rule_name }}</td>
+                <td>{{ a.user }}</td>
+                <td><span class="risk-score" data-score="{{ a.risk_score }}">{{ a.risk_score }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if correlations.by_user %}
+        <h4 class="correlation-header" style="margin-top:1rem">Same User: <code>{{ alert.user }}</code> ({{ correlations.by_user|length }} alerts)</h4>
+        <table class="data-table">
+            <thead><tr><th>ID</th><th>Time</th><th>Severity</th><th>Rule</th><th>IP</th><th>Risk</th></tr></thead>
+            <tbody>
+            {% for a in correlations.by_user[:5] %}
+            <tr class="clickable" onclick="window.location='/alert/{{ a.id }}'">
+                <td>#{{ a.id }}</td>
+                <td>{{ a.timestamp }}</td>
+                <td><span class="badge {{ 'sev-' + a.severity }}">{{ a.severity|upper }}</span></td>
+                <td>{{ a.rule_name }}</td>
+                <td><code>{{ a.source_ip }}</code></td>
+                <td><span class="risk-score" data-score="{{ a.risk_score }}">{{ a.risk_score }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Incident Modal -->
+    <div id="incidentModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <h2>Create Incident from Alert</h2>
+            <form id="incidentForm">
+                <label>Title</label>
+                <input type="text" id="incTitle" value="{{ alert.rule_name }} - {{ alert.source_ip }}" required>
+                <label>Severity</label>
+                <select id="incSeverity">
+                    <option value="critical" {% if alert.severity == 'critical' %}selected{% endif %}>Critical</option>
+                    <option value="high" {% if alert.severity == 'high' %}selected{% endif %}>High</option>
+                    <option value="medium" {% if alert.severity == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="low" {% if alert.severity == 'low' %}selected{% endif %}>Low</option>
+                </select>
+                <label>Description</label>
+                <textarea id="incDesc" rows="3">{{ alert.description }}</textarea>
+                <div class="modal-actions">
+                    <button type="button" class="btn" onclick="hideIncidentModal()">Cancel</button>
+                    <button type="submit" class="btn btn-create-incident">Create Incident</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    async function updateStatus(status) {
+        await fetch('/api/alert/{{ alert.id }}/status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status})
+        });
+        location.reload();
+    }
+    async function saveNotes() {
+        await fetch('/api/alert/{{ alert.id }}/status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: '{{ alert.status }}', notes: document.getElementById('alertNotes').value})
+        });
+        const btn = event.target;
+        btn.textContent = 'Saved!';
+        setTimeout(() => btn.textContent = 'Save Notes', 1500);
+    }
+    function showIncidentModal() { document.getElementById('incidentModal').style.display = 'flex'; }
+    function hideIncidentModal() { document.getElementById('incidentModal').style.display = 'none'; }
+    document.getElementById('incidentForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const r = await fetch('/api/incident', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                title: document.getElementById('incTitle').value,
+                severity: document.getElementById('incSeverity').value,
+                description: document.getElementById('incDesc').value,
+                alert_ids: [{{ alert.id }}],
+                risk_score: {{ alert.risk_score }}
+            })
+        });
+        const d = await r.json();
+        window.location = '/incident/' + d.id;
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Alerts - CyberSOC Mini{% endblock %}
+{% block content %}
+<div class="alerts-page">
+    <div class="page-header">
+        <h1>Security Alerts</h1>
+        <div class="filters">
+            <select onchange="window.location='?status='+this.value+'&severity={{ current_severity or '' }}'" id="statusFilter">
+                <option value="all" {% if current_status == 'all' %}selected{% endif %}>All Status</option>
+                <option value="open" {% if current_status == 'open' %}selected{% endif %}>Open</option>
+                <option value="investigating" {% if current_status == 'investigating' %}selected{% endif %}>Investigating</option>
+                <option value="linked" {% if current_status == 'linked' %}selected{% endif %}>Linked</option>
+                <option value="resolved" {% if current_status == 'resolved' %}selected{% endif %}>Resolved</option>
+            </select>
+            <select onchange="window.location='?status={{ current_status or "open" }}&severity='+this.value" id="sevFilter">
+                <option value="" {% if not current_severity %}selected{% endif %}>All Severity</option>
+                <option value="critical" {% if current_severity == 'critical' %}selected{% endif %}>Critical</option>
+                <option value="high" {% if current_severity == 'high' %}selected{% endif %}>High</option>
+                <option value="medium" {% if current_severity == 'medium' %}selected{% endif %}>Medium</option>
+                <option value="low" {% if current_severity == 'low' %}selected{% endif %}>Low</option>
+            </select>
+        </div>
+    </div>
+
+    <table class="data-table full">
+        <thead>
+            <tr>
+                <th>ID</th><th>Time</th><th>Severity</th><th>Rule</th><th>IP</th><th>User</th><th>Action</th><th>Risk</th><th>Status</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for alert in alerts %}
+        <tr class="clickable" onclick="window.location='/alert/{{ alert.id }}'">
+            <td>#{{ alert.id }}</td>
+            <td>{{ alert.timestamp }}</td>
+            <td><span class="badge {{ 'sev-' + alert.severity }}">{{ alert.severity|upper }}</span></td>
+            <td>{{ alert.rule_name }}</td>
+            <td><code>{{ alert.source_ip }}</code></td>
+            <td>{{ alert.user }}</td>
+            <td><code>{{ alert.action }}</code></td>
+            <td><span class="risk-score" data-score="{{ alert.risk_score }}">{{ alert.risk_score }}</span></td>
+            <td><span class="badge {{ 'status-' + alert.status }}">{{ alert.status }}</span></td>
+            <td>
+                {% if alert.status == 'open' %}
+                <button class="btn btn-sm btn-investigate" onclick="event.stopPropagation(); updateAlertStatus({{ alert.id }}, 'investigating')">Investigate</button>
+                {% endif %}
+                {% if alert.status == 'open' or alert.status == 'investigating' %}
+                <button class="btn btn-sm btn-resolve" onclick="event.stopPropagation(); updateAlertStatus({{ alert.id }}, 'resolved')">Resolve</button>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% if not alerts %}
+    <div class="empty-state">No alerts match the current filters.</div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    async function updateAlertStatus(id, status) {
+        await fetch(`/api/alert/${id}/status`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status})
+        });
+        location.reload();
+    }
+</script>
+{% endblock %}
